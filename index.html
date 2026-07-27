@@ -83,6 +83,7 @@
             max-width: 85%;
             font-size: 14px;
             line-height: 1.5;
+            white-space: pre-line;
         }
         .message.ai { background: #14141f; align-self: flex-start; }
         .message.user { background: #6c5ce7; align-self: flex-end; color: white; }
@@ -112,6 +113,7 @@
 
         .status { font-size: 11px; padding: 4px 10px; border-radius: 10px; font-weight: 600; }
         .status.ready { background: rgba(46,204,113,0.2); color: #2ecc71; }
+        .status.analyzing { background: rgba(241,196,15,0.2); color: #f1c40f; }
 
         .toast {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -120,10 +122,12 @@
         }
 
         .spinner {
-            display: none; width: 18px; height: 18px;
+            display: inline-block; width: 18px; height: 18px;
             border: 2px solid rgba(255,255,255,0.3);
             border-top-color: white; border-radius: 50%;
             animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -153,70 +157,199 @@
 
     <div class="section-title">📂 Мои проекты</div>
     <div id="projectsList">
-        <div style="color:#8888aa;text-align:center;padding:20px;">Пока пусто</div>
+        <div style="color:#8888aa;text-align:center;padding:20px;">Загрузка...</div>
     </div>
 
-    <script>
-        const tg = window.Telegram?.WebApp;
-        if (tg) tg.expand();
+<script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) tg.expand();
 
-        let uploadedFiles = [];
+    // ЗАМЕНИ НА СВОЙ URL
+    const API_URL = "https://MaksimKrysa.pythonanywhere.com";
 
-        document.getElementById('uploadZone').onclick = () => document.getElementById('fileInput').click();
-        document.getElementById('fileInput').onchange = (e) => {
-            for (let f of e.target.files) {
-                if (uploadedFiles.length >= 10) break;
-                uploadedFiles.push(f);
+    let uploadedFiles = [];
+
+    loadProjects();
+
+    document.getElementById('uploadZone').onclick = () => document.getElementById('fileInput').click();
+    document.getElementById('fileInput').onchange = (e) => {
+        for (let f of e.target.files) {
+            if (uploadedFiles.length >= 10) break;
+            uploadedFiles.push(f);
+        }
+        renderFiles();
+    };
+
+    function renderFiles() {
+        document.getElementById('filesList').innerHTML = uploadedFiles.map((f, i) => `
+            <div class="file-chip">${f.name.slice(0,20)} <span class="remove" onclick="uploadedFiles.splice(${i},1);renderFiles()">✕</span></div>
+        `).join('');
+    }
+
+    function addMessage(text, type) {
+        const div = document.createElement('div');
+        div.className = `message ${type}`;
+        div.textContent = text;
+        document.getElementById('messages').appendChild(div);
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    }
+
+    async function sendPrompt() {
+        const prompt = document.getElementById('promptInput').value.trim();
+        if (!prompt || uploadedFiles.length === 0) {
+            if (!prompt) addMessage('Напиши что сделать с видео', 'ai');
+            if (uploadedFiles.length === 0) addMessage('Загрузи хотя бы одно видео', 'ai');
+            return;
+        }
+
+        addMessage(prompt, 'user');
+        document.getElementById('promptInput').value = '';
+
+        const btn = document.getElementById('sendBtn');
+        btn.disabled = true;
+
+        const file = uploadedFiles[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            addMessage('⏳ Загружаю видео на сервер...', 'ai');
+            const uploadRes = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
+            const uploadData = await uploadRes.json();
+            const projectId = uploadData.project_id;
+
+            addMessage('🔬 Анализирую видео (это может занять минуту)...', 'ai');
+
+            const analyzeForm = new FormData();
+            analyzeForm.append('prompt', prompt);
+            const analyzeRes = await fetch(`${API_URL}/analyze/${projectId}`, { method: 'POST', body: analyzeForm });
+            const analyzeData = await analyzeRes.json();
+
+            if (analyzeData.status === 'done') {
+                const a = analyzeData.analysis;
+                const typeNames = {
+                    'sport_goal': '⚽ Спорт/Голы', 'event_cake': '🎂 Праздник',
+                    'pet_moment': '🐱 Животные', 'conversation': '💬 Разговор',
+                    'dance_music': '💃 Танцы', 'random_life': '🎬 Обычное видео'
+                };
+
+                let response = `✅ Проанализировал "${file.name}"\n\n`;
+                response += `📹 Тип: ${typeNames[a.video_type] || a.video_type}\n`;
+                response += `⏱ Длительность: ${a.duration?.toFixed(0)}с\n`;
+                response += `🗣 Язык: ${a.language}\n`;
+                response += `🔥 Событий: ${a.events?.length || 0}\n`;
+                response += `👤 Лиц: ${a.faces_total || 0}\n`;
+
+                if (a.events?.length > 0) {
+                    response += `\n🎯 События:\n`;
+                    a.events.slice(0,3).forEach(e => {
+                        response += `  • ${e.start?.toFixed(0)}с: ${e.description?.slice(0,50)}\n`;
+                    });
+                }
+
+                if (a.scenarios?.length > 0) {
+                    response += `\n📋 Варианты:\n`;
+                    a.scenarios.slice(0,4).forEach((s, i) => {
+                        response += `${i+1}. ${s.title}\n   ${s.description}\n`;
+                    });
+                }
+
+                response += `\n⚠️ Монтаж будет доступен в следующем обновлении.`;
+
+                addMessage(response, 'ai');
+                addProjectCard(file.name, a, projectId);
+            } else {
+                addMessage('❌ Ошибка анализа', 'ai');
             }
-            renderFiles();
-        };
-
-        function renderFiles() {
-            document.getElementById('filesList').innerHTML = uploadedFiles.map((f, i) => `
-                <div class="file-chip">${f.name.slice(0,20)} <span class="remove" onclick="uploadedFiles.splice(${i},1);renderFiles()">✕</span></div>
-            `).join('');
+        } catch (e) {
+            console.error(e);
+            addMessage('❌ Сервер недоступен. Попробуй позже.', 'ai');
         }
 
-        function addMessage(text, type) {
-            const div = document.createElement('div');
-            div.className = `message ${type}`;
-            div.textContent = text;
-            document.getElementById('messages').appendChild(div);
-        }
+        uploadedFiles = [];
+        renderFiles();
+        btn.disabled = false;
+    }
 
-        function sendPrompt() {
-            const prompt = document.getElementById('promptInput').value.trim();
-            if (!prompt || uploadedFiles.length === 0) return;
-            addMessage(prompt, 'user');
-            document.getElementById('promptInput').value = '';
-
-            setTimeout(() => {
-                addMessage(`✅ Проанализировал "${uploadedFiles[0].name}"\n\nТип: спорт/голы\nИнтересных моментов: 3\n\nВарианты:\n1. Обрезать скучное\n2. Лучшие моменты\n3. Оставить всё\n\n(Монтаж скоро будет доступен)', 'ai');
-                addProject(uploadedFiles[0].name);
-            }, 1500);
-        }
-
-        function addProject(name) {
+    async function loadProjects() {
+        try {
+            const res = await fetch(`${API_URL}/projects`);
+            const data = await res.json();
             const list = document.getElementById('projectsList');
-            if (list.querySelector('div[style]')) list.innerHTML = '';
-            list.innerHTML += `
-                <div class="project-card">
-                    <div>
-                        <div class="title">🎬 ${name}</div>
-                        <div class="meta">18с • <span class="status ready">Готово</span></div>
-                    </div>
-                    <div style="display:flex;gap:8px;">
-                        <button class="btn play" onclick="alert('Скоро!')">▶</button>
-                        <button class="btn delete" onclick="this.closest('.project-card').remove()">🗑</button>
-                    </div>
-                </div>`;
-        }
+            list.innerHTML = '';
 
-        document.getElementById('promptInput').addEventListener('keydown', e => {
-            if (e.key === 'Enter') sendPrompt();
+            if (data.projects.length === 0) {
+                list.innerHTML = '<div style="color:#8888aa;text-align:center;padding:20px;">Пока пусто</div>';
+                return;
+            }
+
+            data.projects.forEach(p => {
+                list.appendChild(createProjectCard(p));
+            });
+        } catch(e) {
+            document.getElementById('projectsList').innerHTML = 
+                '<div style="color:#e74c3c;text-align:center;padding:20px;">Сервер недоступен</div>';
+        }
+    }
+
+    function addProjectCard(name, analysis, id) {
+        const list = document.getElementById('projectsList');
+        const empty = list.querySelector('div[style]');
+        if (empty) empty.remove();
+
+        const card = createProjectCard({
+            id: id,
+            filename: name,
+            status: 'analyzed',
+            analysis: analysis,
+            created: new Date().toISOString()
         });
 
-        setTimeout(() => addMessage('Привет! Загрузи видео и напиши что сделать. Я проанализирую и предложу варианты монтажа!', 'ai'), 300);
-    </script>
+        list.insertBefore(card, list.firstChild);
+    }
+
+    function createProjectCard(p) {
+        const typeEmoji = p.analysis ? {
+            'sport_goal': '⚽', 'event_cake': '🎂', 'pet_moment': '🐱',
+            'conversation': '💬', 'dance_music': '💃'
+        }[p.analysis.video_type] || '🎬' : '🎬';
+
+        const div = document.createElement('div');
+        div.className = 'project-card';
+        div.id = `proj-${p.id}`;
+        div.innerHTML = `
+            <div>
+                <div class="title">${typeEmoji} ${p.filename?.slice(0,25)}</div>
+                <div class="meta">
+                    ${p.analysis?.duration?.toFixed(0) || '?'}с • 
+                    <span class="status ${p.status === 'analyzed' ? 'ready' : 'analyzing'}">${p.status === 'analyzed' ? 'Готово' : 'Анализ...'}</span>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn play" onclick="alert('Монтаж будет доступен скоро! 🚀')">▶</button>
+                <button class="btn delete" onclick="deleteProject('${p.id}')">🗑</button>
+            </div>`;
+        return div;
+    }
+
+    async function deleteProject(id) {
+        try {
+            await fetch(`${API_URL}/projects/${id}`, { method: 'DELETE' });
+            const card = document.getElementById(`proj-${id}`);
+            if (card) card.remove();
+
+            const list = document.getElementById('projectsList');
+            if (list.children.length === 0) {
+                list.innerHTML = '<div style="color:#8888aa;text-align:center;padding:20px;">Пока пусто</div>';
+            }
+        } catch(e) {}
+    }
+
+    document.getElementById('promptInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') sendPrompt();
+    });
+
+    setTimeout(() => addMessage('Привет! 👋 Загрузи видео и напиши что сделать. ИИ проанализирует и предложит варианты монтажа!', 'ai'), 300);
+</script>
 </body>
 </html>
