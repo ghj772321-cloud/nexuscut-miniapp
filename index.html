@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusCut AI</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0f;
+            color: #e0e0f0;
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .header {
+            background: linear-gradient(135deg, #6c5ce7, #4a3db5);
+            padding: 24px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 { font-size: 24px; color: white; }
+        .header p { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+
+        .upload-zone {
+            border: 2px dashed #6c5ce7;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            background: #14141f;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+        .upload-zone:active { transform: scale(0.98); }
+        .upload-zone .icon { font-size: 48px; }
+        .upload-zone .text { font-size: 16px; font-weight: 600; margin-top: 8px; }
+        .upload-zone .sub { font-size: 12px; color: #8888aa; margin-top: 4px; }
+
+        .files-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .file-chip {
+            background: #14141f;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .file-chip .remove { color: #e74c3c; cursor: pointer; font-weight: bold; }
+
+        .chat-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .chat-row input {
+            flex: 1;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid #2a2a3a;
+            background: #14141f;
+            color: #e0e0f0;
+            font-size: 15px;
+        }
+        .chat-row button {
+            padding: 14px 20px;
+            border-radius: 14px;
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .chat-row button:disabled { opacity: 0.5; }
+
+        .messages { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .message {
+            padding: 12px 16px;
+            border-radius: 14px;
+            max-width: 85%;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .message.ai { background: #14141f; align-self: flex-start; }
+        .message.user { background: #6c5ce7; align-self: flex-end; color: white; }
+
+        .section-title { font-size: 16px; font-weight: 700; margin: 20px 0 12px; }
+
+        .project-card {
+            background: #14141f;
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .project-card .title { font-weight: 600; }
+        .project-card .meta { font-size: 12px; color: #8888aa; margin-top: 4px; }
+        .project-card .btn {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn.play { background: #6c5ce7; color: white; }
+        .btn.delete { background: rgba(231,76,60,0.2); color: #e74c3c; }
+
+        .status { font-size: 11px; padding: 4px 10px; border-radius: 10px; font-weight: 600; }
+        .status.ready { background: rgba(46,204,113,0.2); color: #2ecc71; }
+
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #6c5ce7; color: white; padding: 12px 24px;
+            border-radius: 20px; font-weight: 600; z-index: 999;
+        }
+
+        .spinner {
+            display: none; width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🎬 NexusCut AI</h1>
+        <p>Умный видеомонтаж в Telegram</p>
+    </div>
+
+    <div class="upload-zone" id="uploadZone">
+        <div class="icon">📤</div>
+        <div class="text">Загрузи видео или фото</div>
+        <div class="sub">До 10 видео по 60 сек</div>
+    </div>
+    <input type="file" id="fileInput" multiple accept="video/*,image/*" style="display:none">
+
+    <div class="files-list" id="filesList"></div>
+
+    <div class="chat-row">
+        <input type="text" id="promptInput" placeholder="Что делаем с видео?">
+        <button id="sendBtn" onclick="sendPrompt()">➤</button>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="section-title">📂 Мои проекты</div>
+    <div id="projectsList">
+        <div style="color:#8888aa;text-align:center;padding:20px;">Пока пусто</div>
+    </div>
+
+    <script>
+        const tg = window.Telegram?.WebApp;
+        if (tg) tg.expand();
+
+        let uploadedFiles = [];
+
+        document.getElementById('uploadZone').onclick = () => document.getElementById('fileInput').click();
+        document.getElementById('fileInput').onchange = (e) => {
+            for (let f of e.target.files) {
+                if (uploadedFiles.length >= 10) break;
+                uploadedFiles.push(f);
+            }
+            renderFiles();
+        };
+
+        function renderFiles() {
+            document.getElementById('filesList').innerHTML = uploadedFiles.map((f, i) => `
+                <div class="file-chip">${f.name.slice(0,20)} <span class="remove" onclick="uploadedFiles.splice(${i},1);renderFiles()">✕</span></div>
+            `).join('');
+        }
+
+        function addMessage(text, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = text;
+            document.getElementById('messages').appendChild(div);
+        }
+
+        function sendPrompt() {
+            const prompt = document.getElementById('promptInput').value.trim();
+            if (!prompt || uploadedFiles.length === 0) return;
+            addMessage(prompt, 'user');
+            document.getElementById('promptInput').value = '';
+
+            setTimeout(() => {
+                addMessage(`✅ Проанализировал "${uploadedFiles[0].name}"\n\nТип: спорт/голы\nИнтересных моментов: 3\n\nВарианты:\n1. Обрезать скучное\n2. Лучшие моменты\n3. Оставить всё\n\n(Монтаж скоро будет доступен)', 'ai');
+                addProject(uploadedFiles[0].name);
+            }, 1500);
+        }
+
+        function addProject(name) {
+            const list = document.getElementById('projectsList');
+            if (list.querySelector('div[style]')) list.innerHTML = '';
+            list.innerHTML += `
+                <div class="project-card">
+                    <div>
+                        <div class="title">🎬 ${name}</div>
+                        <div class="meta">18с • <span class="status ready">Готово</span></div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn play" onclick="alert('Скоро!')">▶</button>
+                        <button class="btn delete" onclick="this.closest('.project-card').remove()">🗑</button>
+                    </div>
+                </div>`;
+        }
+
+        document.getElementById('promptInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') sendPrompt();
+        });
+
+        setTimeout(() => addMessage('Привет! Загрузи видео и напиши что сделать. Я проанализирую и предложу варианты монтажа!', 'ai'), 300);
+    </script>
+</body>
+</html>
