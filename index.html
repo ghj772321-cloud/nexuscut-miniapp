@@ -36,7 +36,6 @@
                 radial-gradient(ellipse at 80% 100%, rgba(124, 58, 237, 0.05) 0%, transparent 50%);
         }
 
-        /* Glass card */
         .glass {
             background: rgba(15, 15, 26, 0.8);
             backdrop-filter: blur(20px);
@@ -44,7 +43,6 @@
             border: 1px solid rgba(255,255,255,0.06);
         }
 
-        /* Header */
         .header {
             background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 50%, #4c1d95 100%);
             padding: 28px 20px 24px;
@@ -93,10 +91,8 @@
             letter-spacing: 0.5px;
         }
 
-        /* Main container */
         .container { padding: 16px; }
 
-        /* Upload */
         .upload-zone {
             padding: 36px 20px;
             border: 2px dashed rgba(124, 58, 237, 0.4);
@@ -136,7 +132,6 @@
             margin-top: 4px;
         }
 
-        /* File chips */
         .files-list {
             display: flex;
             flex-wrap: wrap;
@@ -172,7 +167,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Chat input */
         .chat-section { margin: 16px 0; }
         .chat-row {
             display: flex;
@@ -208,7 +202,6 @@
         .chat-row button:active { transform: scale(0.93); }
         .chat-row button:disabled { opacity: 0.4; box-shadow: none; }
 
-        /* Messages */
         .messages {
             display: flex;
             flex-direction: column;
@@ -226,6 +219,7 @@
             line-height: 1.6;
             animation: slideUp 0.35s ease;
             word-break: break-word;
+            white-space: pre-line;
         }
         .message.ai {
             background: var(--surface);
@@ -246,26 +240,6 @@
             text-align: right;
         }
 
-        /* Loading dots */
-        .loading-dots {
-            display: inline-flex;
-            gap: 4px;
-            padding: 4px 0;
-        }
-        .loading-dots span {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--accent);
-            animation: dotBounce 1.2s infinite;
-        }
-        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes dotBounce {
-            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-            40% { transform: scale(1); opacity: 1; }
-        }
-
-        /* Sections */
         .section-title {
             font-size: 13px;
             font-weight: 700;
@@ -275,7 +249,6 @@
             margin: 24px 0 12px;
         }
 
-        /* Project cards */
         .project-card {
             background: var(--surface);
             border-radius: var(--radius);
@@ -339,7 +312,6 @@
         .btn-delete { background: rgba(239,68,68,0.15); color: var(--danger); }
         .btn-icon:active { transform: scale(0.9); }
 
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 24px;
@@ -358,7 +330,6 @@
             white-space: nowrap;
         }
 
-        /* Empty state */
         .empty-state {
             text-align: center;
             padding: 32px 20px;
@@ -366,7 +337,6 @@
         }
         .empty-state .icon { font-size: 40px; margin-bottom: 10px; opacity: 0.5; }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
@@ -383,7 +353,6 @@
     </div>
 
     <div class="container">
-        <!-- Upload -->
         <div class="upload-zone glass" id="uploadZone">
             <div class="icon">📤</div>
             <div class="text">Загрузи видео или фото</div>
@@ -393,20 +362,17 @@
 
         <div class="files-list" id="filesList"></div>
 
-        <!-- Chat -->
         <div class="chat-section">
             <div class="chat-row">
-                <input type="text" id="promptInput" placeholder="Что сделать с видео? Например: нарезка лучших моментов">
+                <input type="text" id="promptInput" placeholder="Что сделать с видео?">
                 <button id="sendBtn" onclick="sendPrompt()">
                     <span id="sendIcon">↑</span>
                 </button>
             </div>
         </div>
 
-        <!-- Messages -->
         <div class="messages" id="messages"></div>
 
-        <!-- Projects -->
         <div class="section-title">📂 Проекты</div>
         <div id="projectsList">
             <div class="empty-state">
@@ -418,10 +384,7 @@
 
 <script>
     const tg = window.Telegram?.WebApp;
-    if (tg) {
-        tg.expand();
-        tg.setBackgroundColor('#06060c');
-    }
+    if (tg) { tg.expand(); tg.setBackgroundColor('#06060c'); }
 
     const API_URL = "https://ce6155f2d4a56055-66-163-116-22.serveousercontent.com";
     let uploadedFiles = [];
@@ -429,7 +392,6 @@
 
     loadProjects();
 
-    // Upload handlers
     document.getElementById('uploadZone').onclick = () => document.getElementById('fileInput').click();
     document.getElementById('fileInput').onchange = (e) => {
         for (let f of e.target.files) {
@@ -440,13 +402,10 @@
         document.getElementById('fileInput').value = '';
     };
 
-    // Drag & drop
     const zone = document.getElementById('uploadZone');
-    zone.ondragover = (e) => { e.preventDefault(); zone.style.borderColor = '#7c3aed'; };
-    zone.ondragleave = () => { zone.style.borderColor = 'rgba(124, 58, 237, 0.4)'; };
+    zone.ondragover = (e) => { e.preventDefault(); };
     zone.ondrop = (e) => {
         e.preventDefault();
-        zone.style.borderColor = 'rgba(124, 58, 237, 0.4)';
         for (let f of e.dataTransfer.files) {
             if (uploadedFiles.length >= 10) break;
             uploadedFiles.push(f);
@@ -475,23 +434,15 @@
 
     async function sendPrompt() {
         if (isProcessing) return;
-
         const prompt = document.getElementById('promptInput').value.trim();
-        if (!prompt && uploadedFiles.length === 0) {
-            showToast('Загрузи видео и напиши запрос');
+        if (!prompt || uploadedFiles.length === 0) {
+            showToast(prompt ? 'Загрузи видео' : 'Напиши запрос');
             return;
         }
-        if (!prompt) { showToast('Напиши что сделать с видео'); return; }
-        if (uploadedFiles.length === 0) { showToast('Загрузи видео'); return; }
 
         addMessage(prompt, 'user');
         document.getElementById('promptInput').value = '';
         isProcessing = true;
-
-        const btn = document.getElementById('sendBtn');
-        const icon = document.getElementById('sendIcon');
-        btn.disabled = true;
-        icon.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
 
         const file = uploadedFiles[0];
         const formData = new FormData();
@@ -499,177 +450,111 @@
 
         try {
             addMessage('⏳ Загружаю на сервер...', 'ai');
-
-            const uploadRes = await fetch(`${API_URL}/upload`, {
-                method: 'POST',
-                body: formData,
-                mode: 'cors'
-            });
-
-            if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
-
+            const uploadRes = await fetch(API_URL + '/upload', { method: 'POST', body: formData });
             const uploadData = await uploadRes.json();
             const projectId = uploadData.project_id;
 
             addMessage('🔬 Анализирую видео...', 'ai');
-
             const analyzeForm = new FormData();
             analyzeForm.append('prompt', prompt);
-
-            const analyzeRes = await fetch(`${API_URL}/analyze/${projectId}`, {
-                method: 'POST',
-                body: analyzeForm,
-                mode: 'cors'
-            });
-
-            if (!analyzeRes.ok) throw new Error(`Analyze failed: ${analyzeRes.status}`);
-
+            const analyzeRes = await fetch(API_URL + '/analyze/' + projectId, { method: 'POST', body: analyzeForm });
             const analyzeData = await analyzeRes.json();
 
             if (analyzeData.status === 'done') {
                 const a = analyzeData.analysis;
-                let response = `✅ **Готово!**\n\n`;
-                response += `📹 ${a.type_name || a.video_type}\n`;
-                response += `⏱ ${a.duration?.toFixed(0)}с • 📐 ${a.resolution || ''}\n`;
-                if (a.language && a.language !== 'unknown') response += `🗣 Язык: ${a.language}\n`;
-                if (a.transcript) response += `📝 ${a.transcript.slice(0,150)}...\n`;
-                if (a.events?.length > 0) {
-                    response += `\n🎯 События:\n`;
-                    a.events.slice(0,4).forEach(e => {
-                        response += `  • ${e.start?.toFixed(0)}-${e.end?.toFixed(0)}с: ${e.description?.slice(0,50)}\n`;
-                    });
+                let r = `✅ Готово!\n📹 ${a.type_name || a.video_type}\n⏱ ${a.duration?.toFixed(0)}с`;
+                if (a.language && a.language !== 'unknown') r += ` • 🗣 ${a.language}`;
+                if (a.events?.length) {
+                    r += '\n🎯 События:';
+                    a.events.slice(0,4).forEach(e => r += `\n  ${e.start?.toFixed(0)}-${e.end?.toFixed(0)}с: ${e.description?.slice(0,40)}`);
                 }
-                if (a.scenarios?.length > 0) {
-                    response += `\n📋 Варианты:\n`;
-                    a.scenarios.slice(0,3).forEach((s, i) => {
-                        response += `${i+1}. ${s.title}: ${s.description}\n`;
-                    });
+                if (a.scenarios?.length) {
+                    r += '\n📋 Варианты:';
+                    a.scenarios.slice(0,3).forEach((s,i) => r += `\n${i+1}. ${s.title}: ${s.description}`);
                 }
-                response += `\n⚠️ Монтаж скоро появится`;
-
-                addMessage(response, 'ai');
+                r += '\n⚠️ Монтаж скоро';
+                addMessage(r, 'ai');
                 addProjectCard(file.name, a, projectId);
             } else {
-                addMessage('❌ Ошибка анализа: ' + (analyzeData.error || 'неизвестно'), 'ai');
+                addMessage('❌ Ошибка: ' + (analyzeData.error || 'неизвестно'), 'ai');
             }
         } catch (e) {
-            console.error(e);
-            addMessage(`❌ Сервер недоступен.\n${e.message}`, 'ai');
+            addMessage('❌ Сервер недоступен. ' + e.message, 'ai');
         }
 
         uploadedFiles = [];
         renderFiles();
-        btn.disabled = false;
-        icon.innerHTML = '↑';
         isProcessing = false;
     }
 
     async function loadProjects() {
         try {
-            const res = await fetch(`${API_URL}/projects`, { mode: 'cors' });
-            if (!res.ok) return;
+            const res = await fetch(API_URL + '/projects');
             const data = await res.json();
             const list = document.getElementById('projectsList');
             list.innerHTML = '';
-
-            if (data.projects.length === 0) {
+            if (!data.projects.length) {
                 list.innerHTML = '<div class="empty-state"><div class="icon">🎞</div><div>Пока нет проектов</div></div>';
                 return;
             }
-
-            data.projects.forEach(p => {
-                list.appendChild(createProjectCard(p));
-            });
-        } catch(e) {
-            // Сервер офлайн — оставляем пустое состояние
-        }
+            data.projects.forEach(p => list.appendChild(createProjectCard(p)));
+        } catch(e) {}
     }
 
     function addProjectCard(name, analysis, id) {
         const list = document.getElementById('projectsList');
-        const empty = list.querySelector('.empty-state');
-        if (empty) empty.remove();
-
-        const card = createProjectCard({
-            id, filename: name, status: 'analyzed',
-            analysis, created: new Date().toISOString()
-        });
-        list.insertBefore(card, list.firstChild);
+        if (list.querySelector('.empty-state')) list.innerHTML = '';
+        list.insertBefore(createProjectCard({id, filename:name, status:'analyzed', analysis}), list.firstChild);
     }
 
     function createProjectCard(p) {
-        const typeColors = {
-            'sport_goal': { bg: 'rgba(59,130,246,0.2)', emoji: '⚽' },
-            'event_cake': { bg: 'rgba(236,72,153,0.2)', emoji: '🎂' },
-            'pet_moment': { bg: 'rgba(34,197,94,0.2)', emoji: '🐱' },
-            'conversation': { bg: 'rgba(168,85,247,0.2)', emoji: '💬' },
-            'dance_music': { bg: 'rgba(251,146,60,0.2)', emoji: '💃' },
-            'social_clip': { bg: 'rgba(124,58,237,0.2)', emoji: '📱' },
-            'short_clip': { bg: 'rgba(250,204,21,0.2)', emoji: '⚡' },
-            'long_video': { bg: 'rgba(107,114,128,0.2)', emoji: '🎞' },
+        const colors = {
+            sport_goal:'rgba(59,130,246,0.2)',event_cake:'rgba(236,72,153,0.2)',
+            pet_moment:'rgba(34,197,94,0.2)',conversation:'rgba(168,85,247,0.2)',
+            dance_music:'rgba(251,146,60,0.2)',social_clip:'rgba(124,58,237,0.2)'
         };
-        const tc = typeColors[p.analysis?.video_type] || { bg: 'rgba(124,58,237,0.2)', emoji: '🎬' };
+        const emojis = {
+            sport_goal:'⚽',event_cake:'🎂',pet_moment:'🐱',
+            conversation:'💬',dance_music:'💃',image:'📷'
+        };
+        const vt = p.analysis?.video_type || 'standard';
+        const bg = colors[vt] || 'rgba(124,58,237,0.2)';
+        const em = emojis[vt] || '🎬';
 
         const div = document.createElement('div');
         div.className = 'project-card';
-        div.id = `proj-${p.id}`;
+        div.id = 'proj-' + p.id;
         div.innerHTML = `
-            <div class="project-thumb" style="background:${tc.bg}">${tc.emoji}</div>
+            <div class="project-thumb" style="background:${bg}">${em}</div>
             <div class="project-info">
                 <div class="project-title">${p.filename?.slice(0,30)}</div>
                 <div class="project-meta">
-                    ${p.analysis?.duration?.toFixed(0) || '?'}с
+                    ${p.analysis?.duration?.toFixed(0)||'?'}с
                     <span class="status-badge status-ready">Готово</span>
                 </div>
             </div>
             <div class="project-actions">
-                <button class="btn-icon btn-play" onclick="showToast('Монтаж скоро! 🚀')">▶</button>
+                <button class="btn-icon btn-play" onclick="showToast('Монтаж скоро!')">▶</button>
                 <button class="btn-icon btn-delete" onclick="deleteProject('${p.id}')">🗑</button>
-            </div>
-        `;
+            </div>`;
         return div;
     }
 
     async function deleteProject(id) {
-        try {
-            await fetch(`${API_URL}/projects/${id}`, { method: 'DELETE', mode: 'cors' });
-        } catch(e) {}
-        const card = document.getElementById(`proj-${id}`);
-        if (card) {
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.95)';
-            card.style.transition = 'all 0.2s';
-            setTimeout(() => {
-                card.remove();
-                if (document.getElementById('projectsList').children.length === 0) {
-                    document.getElementById('projectsList').innerHTML = '<div class="empty-state"><div class="icon">🎞</div><div>Пока нет проектов</div></div>';
-                }
-            }, 200);
-        }
+        try { await fetch(API_URL + '/projects/' + id, { method: 'DELETE' }); } catch(e) {}
+        const card = document.getElementById('proj-' + id);
+        if (card) { card.remove(); if (!document.getElementById('projectsList').children.length) document.getElementById('projectsList').innerHTML = '<div class="empty-state"><div class="icon">🎞</div><div>Пока нет проектов</div></div>'; }
     }
 
     function showToast(text) {
-        const existing = document.querySelector('.toast');
-        if (existing) existing.remove();
-
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.textContent = text;
-        document.body.appendChild(toast);
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.3s';
-            setTimeout(() => toast.remove(), 300);
-        }, 2200);
+        const t = document.createElement('div');
+        t.className = 'toast'; t.textContent = text;
+        document.body.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 2200);
     }
 
-    document.getElementById('promptInput').addEventListener('keydown', e => {
-        if (e.key === 'Enter') sendPrompt();
-    });
-
-    setTimeout(() => {
-        addMessage('Привет! 👋 Я NexusCut AI. Загрузи видео и напиши что хочешь сделать — я проанализирую и предложу варианты монтажа.', 'ai');
-    }, 400);
+    document.getElementById('promptInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendPrompt(); });
+    setTimeout(() => addMessage('Привет! 👋 Я NexusCut AI. Загрузи видео и напиши что сделать — я проанализирую и предложу варианты!', 'ai'), 400);
 </script>
 </body>
 </html>
