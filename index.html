@@ -2,177 +2,452 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NexusCut AI</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0a0a0f;
-            color: #e0e0f0;
-            min-height: 100vh;
-            padding: 16px;
+        :root {
+            --bg: #06060c;
+            --surface: #0f0f1a;
+            --surface2: #181828;
+            --primary: #7c3aed;
+            --primary-glow: rgba(124, 58, 237, 0.4);
+            --accent: #a78bfa;
+            --text: #e8e8f0;
+            --text2: #9898b0;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --radius: 18px;
+            --radius-sm: 12px;
         }
-        .header {
-            background: linear-gradient(135deg, #6c5ce7, #4a3db5);
-            padding: 24px;
-            border-radius: 20px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .header h1 { font-size: 24px; color: white; }
-        .header p { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px; }
 
-        .upload-zone {
-            border: 2px dashed #6c5ce7;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(124, 58, 237, 0.05) 0%, transparent 50%);
+        }
+
+        /* Glass card */
+        .glass {
+            background: rgba(15, 15, 26, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 50%, #4c1d95 100%);
+            padding: 28px 20px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            animation: headerGlow 4s ease-in-out infinite;
+        }
+        @keyframes headerGlow {
+            0%, 100% { transform: translate(0,0); }
+            50% { transform: translate(10px,-10px); }
+        }
+        .header-content { position: relative; z-index: 1; }
+        .logo {
+            width: 56px; height: 56px;
+            background: rgba(255,255,255,0.15);
             border-radius: 16px;
-            padding: 40px;
+            margin: 0 auto 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+        .header .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-top: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* Main container */
+        .container { padding: 16px; }
+
+        /* Upload */
+        .upload-zone {
+            padding: 36px 20px;
+            border: 2px dashed rgba(124, 58, 237, 0.4);
+            border-radius: var(--radius);
             text-align: center;
             cursor: pointer;
-            background: #14141f;
-            margin-bottom: 16px;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
-        .upload-zone:active { transform: scale(0.98); }
-        .upload-zone .icon { font-size: 48px; }
-        .upload-zone .text { font-size: 16px; font-weight: 600; margin-top: 8px; }
-        .upload-zone .sub { font-size: 12px; color: #8888aa; margin-top: 4px; }
+        .upload-zone::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(124,58,237,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .upload-zone:active {
+            transform: scale(0.98);
+            border-color: var(--primary);
+        }
+        .upload-zone:active::after { opacity: 1; }
+        .upload-zone .icon {
+            font-size: 44px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 4px 12px var(--primary-glow));
+        }
+        .upload-zone .text {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .upload-zone .sub {
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: 4px;
+        }
 
-        .files-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        /* File chips */
+        .files-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
         .file-chip {
-            background: #14141f;
-            padding: 8px 14px;
-            border-radius: 20px;
+            background: var(--surface2);
+            padding: 10px 14px;
+            border-radius: 24px;
             font-size: 13px;
+            font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+            animation: slideUp 0.3s ease;
         }
-        .file-chip .remove { color: #e74c3c; cursor: pointer; font-weight: bold; }
+        .file-chip .remove {
+            color: var(--danger);
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 16px;
+            width: 20px; height: 20px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        .file-chip .remove:active { background: rgba(239,68,68,0.2); }
 
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Chat input */
+        .chat-section { margin: 16px 0; }
         .chat-row {
             display: flex;
             gap: 8px;
-            margin-bottom: 16px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 6px;
+            border: 1px solid rgba(255,255,255,0.06);
         }
         .chat-row input {
             flex: 1;
-            padding: 14px;
-            border-radius: 14px;
-            border: 1px solid #2a2a3a;
-            background: #14141f;
-            color: #e0e0f0;
+            padding: 12px 14px;
+            background: transparent;
+            border: none;
+            color: var(--text);
             font-size: 15px;
+            outline: none;
         }
+        .chat-row input::placeholder { color: var(--text2); }
         .chat-row button {
-            padding: 14px 20px;
+            width: 48px; height: 48px;
             border-radius: 14px;
-            background: #6c5ce7;
+            background: var(--primary);
             color: white;
             border: none;
-            font-weight: 600;
+            font-size: 20px;
+            font-weight: 700;
             cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px var(--primary-glow);
         }
-        .chat-row button:disabled { opacity: 0.5; }
+        .chat-row button:active { transform: scale(0.93); }
+        .chat-row button:disabled { opacity: 0.4; box-shadow: none; }
 
-        .messages { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        /* Messages */
+        .messages {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 16px 0;
+            max-height: 45vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
         .message {
-            padding: 12px 16px;
-            border-radius: 14px;
-            max-width: 85%;
+            padding: 14px 16px;
+            border-radius: 18px;
+            max-width: 88%;
             font-size: 14px;
-            line-height: 1.5;
-            white-space: pre-line;
+            line-height: 1.6;
+            animation: slideUp 0.35s ease;
+            word-break: break-word;
         }
-        .message.ai { background: #14141f; align-self: flex-start; }
-        .message.user { background: #6c5ce7; align-self: flex-end; color: white; }
+        .message.ai {
+            background: var(--surface);
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+        .message.user {
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+            color: white;
+        }
+        .message .time {
+            font-size: 10px;
+            opacity: 0.5;
+            margin-top: 6px;
+            text-align: right;
+        }
 
-        .section-title { font-size: 16px; font-weight: 700; margin: 20px 0 12px; }
+        /* Loading dots */
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+            padding: 4px 0;
+        }
+        .loading-dots span {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: dotBounce 1.2s infinite;
+        }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotBounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
 
+        /* Sections */
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 24px 0 12px;
+        }
+
+        /* Project cards */
         .project-card {
-            background: #14141f;
-            border-radius: 14px;
+            background: var(--surface);
+            border-radius: var(--radius);
             padding: 16px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            gap: 14px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.04);
+            transition: all 0.2s;
+            animation: slideUp 0.3s ease;
         }
-        .project-card .title { font-weight: 600; }
-        .project-card .meta { font-size: 12px; color: #8888aa; margin-top: 4px; }
-        .project-card .btn {
-            width: 40px; height: 40px;
+        .project-card:active { background: var(--surface2); }
+        .project-thumb {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .project-info { flex: 1; min-width: 0; }
+        .project-title {
+            font-weight: 700;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .project-meta {
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-badge {
+            font-size: 10px;
+            padding: 3px 8px;
             border-radius: 10px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .status-ready { background: rgba(34,197,94,0.15); color: var(--success); }
+        .status-processing { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .project-actions { display: flex; gap: 6px; }
+        .btn-icon {
+            width: 38px; height: 38px;
+            border-radius: 12px;
             border: none;
             cursor: pointer;
             font-size: 16px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .btn.play { background: #6c5ce7; color: white; }
-        .btn.delete { background: rgba(231,76,60,0.2); color: #e74c3c; }
+        .btn-play { background: var(--primary); color: white; }
+        .btn-delete { background: rgba(239,68,68,0.15); color: var(--danger); }
+        .btn-icon:active { transform: scale(0.9); }
 
-        .status { font-size: 11px; padding: 4px 10px; border-radius: 10px; font-weight: 600; }
-        .status.ready { background: rgba(46,204,113,0.2); color: #2ecc71; }
-        .status.analyzing { background: rgba(241,196,15,0.2); color: #f1c40f; }
-
+        /* Toast */
         .toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: #6c5ce7; color: white; padding: 12px 24px;
-            border-radius: 20px; font-weight: 600; z-index: 999;
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface2);
+            color: var(--text);
+            padding: 14px 22px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 999;
+            animation: slideUp 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            white-space: nowrap;
         }
 
-        .spinner {
-            display: inline-block; width: 18px; height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white; border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            vertical-align: middle;
-            margin-right: 6px;
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 32px 20px;
+            color: var(--text2);
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state .icon { font-size: 40px; margin-bottom: 10px; opacity: 0.5; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>🎬 NexusCut AI</h1>
-        <p>Умный видеомонтаж в Telegram</p>
+        <div class="header-content">
+            <div class="logo">🎬</div>
+            <h1>NexusCut</h1>
+            <div class="badge">✦ AI Video Editor</div>
+        </div>
     </div>
 
-    <div class="upload-zone" id="uploadZone">
-        <div class="icon">📤</div>
-        <div class="text">Загрузи видео или фото</div>
-        <div class="sub">До 10 видео по 60 сек</div>
-    </div>
-    <input type="file" id="fileInput" multiple accept="video/*,image/*" style="display:none">
+    <div class="container">
+        <!-- Upload -->
+        <div class="upload-zone glass" id="uploadZone">
+            <div class="icon">📤</div>
+            <div class="text">Загрузи видео или фото</div>
+            <div class="sub">До 10 файлов • Макс 60 секунд</div>
+        </div>
+        <input type="file" id="fileInput" multiple accept="video/*,image/*" style="display:none">
 
-    <div class="files-list" id="filesList"></div>
+        <div class="files-list" id="filesList"></div>
 
-    <div class="chat-row">
-        <input type="text" id="promptInput" placeholder="Что делаем с видео?">
-        <button id="sendBtn" onclick="sendPrompt()">➤</button>
-    </div>
+        <!-- Chat -->
+        <div class="chat-section">
+            <div class="chat-row">
+                <input type="text" id="promptInput" placeholder="Что сделать с видео? Например: нарезка лучших моментов">
+                <button id="sendBtn" onclick="sendPrompt()">
+                    <span id="sendIcon">↑</span>
+                </button>
+            </div>
+        </div>
 
-    <div class="messages" id="messages"></div>
+        <!-- Messages -->
+        <div class="messages" id="messages"></div>
 
-    <div class="section-title">📂 Мои проекты</div>
-    <div id="projectsList">
-        <div style="color:#8888aa;text-align:center;padding:20px;">Загрузка...</div>
+        <!-- Projects -->
+        <div class="section-title">📂 Проекты</div>
+        <div id="projectsList">
+            <div class="empty-state">
+                <div class="icon">🎞</div>
+                <div>Пока нет проектов</div>
+            </div>
+        </div>
     </div>
 
 <script>
     const tg = window.Telegram?.WebApp;
-    if (tg) tg.expand();
+    if (tg) {
+        tg.expand();
+        tg.setBackgroundColor('#06060c');
+    }
 
-    // ЗАМЕНИ НА СВОЙ URL
     const API_URL = "https://scruffy-snowsuit-faculty.ngrok-free.dev";
     let uploadedFiles = [];
+    let isProcessing = false;
 
     loadProjects();
 
+    // Upload handlers
     document.getElementById('uploadZone').onclick = () => document.getElementById('fileInput').click();
     document.getElementById('fileInput').onchange = (e) => {
         for (let f of e.target.files) {
+            if (uploadedFiles.length >= 10) { showToast('Максимум 10 файлов'); break; }
+            uploadedFiles.push(f);
+        }
+        renderFiles();
+        document.getElementById('fileInput').value = '';
+    };
+
+    // Drag & drop
+    const zone = document.getElementById('uploadZone');
+    zone.ondragover = (e) => { e.preventDefault(); zone.style.borderColor = '#7c3aed'; };
+    zone.ondragleave = () => { zone.style.borderColor = 'rgba(124, 58, 237, 0.4)'; };
+    zone.ondrop = (e) => {
+        e.preventDefault();
+        zone.style.borderColor = 'rgba(124, 58, 237, 0.4)';
+        for (let f of e.dataTransfer.files) {
             if (uploadedFiles.length >= 10) break;
             uploadedFiles.push(f);
         }
@@ -181,104 +456,124 @@
 
     function renderFiles() {
         document.getElementById('filesList').innerHTML = uploadedFiles.map((f, i) => `
-            <div class="file-chip">${f.name.slice(0,20)} <span class="remove" onclick="uploadedFiles.splice(${i},1);renderFiles()">✕</span></div>
+            <div class="file-chip">
+                ${f.type.startsWith('video/') ? '🎬' : '📷'} ${f.name.slice(0,22)}
+                <span class="remove" onclick="uploadedFiles.splice(${i},1);renderFiles()">×</span>
+            </div>
         `).join('');
     }
 
     function addMessage(text, type) {
+        const container = document.getElementById('messages');
+        const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
         const div = document.createElement('div');
         div.className = `message ${type}`;
-        div.textContent = text;
-        document.getElementById('messages').appendChild(div);
-        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        div.innerHTML = `${text}<div class="time">${time}</div>`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
     }
 
     async function sendPrompt() {
+        if (isProcessing) return;
+
         const prompt = document.getElementById('promptInput').value.trim();
-        if (!prompt || uploadedFiles.length === 0) {
-            if (!prompt) addMessage('Напиши что сделать с видео', 'ai');
-            if (uploadedFiles.length === 0) addMessage('Загрузи хотя бы одно видео', 'ai');
+        if (!prompt && uploadedFiles.length === 0) {
+            showToast('Загрузи видео и напиши запрос');
             return;
         }
+        if (!prompt) { showToast('Напиши что сделать с видео'); return; }
+        if (uploadedFiles.length === 0) { showToast('Загрузи видео'); return; }
 
         addMessage(prompt, 'user');
         document.getElementById('promptInput').value = '';
+        isProcessing = true;
 
         const btn = document.getElementById('sendBtn');
+        const icon = document.getElementById('sendIcon');
         btn.disabled = true;
+        icon.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
 
         const file = uploadedFiles[0];
         const formData = new FormData();
         formData.append('file', file);
 
         try {
-            addMessage('⏳ Загружаю видео на сервер...', 'ai');
-            const uploadRes = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
+            addMessage('⏳ Загружаю на сервер...', 'ai');
+
+            const uploadRes = await fetch(`${API_URL}/upload`, {
+                method: 'POST',
+                body: formData,
+                mode: 'cors'
+            });
+
+            if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
+
             const uploadData = await uploadRes.json();
             const projectId = uploadData.project_id;
 
-            addMessage('🔬 Анализирую видео (это может занять минуту)...', 'ai');
+            addMessage('🔬 Анализирую видео...', 'ai');
 
             const analyzeForm = new FormData();
             analyzeForm.append('prompt', prompt);
-            const analyzeRes = await fetch(`${API_URL}/analyze/${projectId}`, { method: 'POST', body: analyzeForm });
+
+            const analyzeRes = await fetch(`${API_URL}/analyze/${projectId}`, {
+                method: 'POST',
+                body: analyzeForm,
+                mode: 'cors'
+            });
+
+            if (!analyzeRes.ok) throw new Error(`Analyze failed: ${analyzeRes.status}`);
+
             const analyzeData = await analyzeRes.json();
 
             if (analyzeData.status === 'done') {
                 const a = analyzeData.analysis;
-                const typeNames = {
-                    'sport_goal': '⚽ Спорт/Голы', 'event_cake': '🎂 Праздник',
-                    'pet_moment': '🐱 Животные', 'conversation': '💬 Разговор',
-                    'dance_music': '💃 Танцы', 'random_life': '🎬 Обычное видео'
-                };
-
-                let response = `✅ Проанализировал "${file.name}"\n\n`;
-                response += `📹 Тип: ${typeNames[a.video_type] || a.video_type}\n`;
-                response += `⏱ Длительность: ${a.duration?.toFixed(0)}с\n`;
-                response += `🗣 Язык: ${a.language}\n`;
-                response += `🔥 Событий: ${a.events?.length || 0}\n`;
-                response += `👤 Лиц: ${a.faces_total || 0}\n`;
-
+                let response = `✅ **Готово!**\n\n`;
+                response += `📹 ${a.type_name || a.video_type}\n`;
+                response += `⏱ ${a.duration?.toFixed(0)}с • 📐 ${a.resolution || ''}\n`;
+                if (a.language && a.language !== 'unknown') response += `🗣 Язык: ${a.language}\n`;
+                if (a.transcript) response += `📝 ${a.transcript.slice(0,150)}...\n`;
                 if (a.events?.length > 0) {
                     response += `\n🎯 События:\n`;
-                    a.events.slice(0,3).forEach(e => {
-                        response += `  • ${e.start?.toFixed(0)}с: ${e.description?.slice(0,50)}\n`;
+                    a.events.slice(0,4).forEach(e => {
+                        response += `  • ${e.start?.toFixed(0)}-${e.end?.toFixed(0)}с: ${e.description?.slice(0,50)}\n`;
                     });
                 }
-
                 if (a.scenarios?.length > 0) {
                     response += `\n📋 Варианты:\n`;
-                    a.scenarios.slice(0,4).forEach((s, i) => {
-                        response += `${i+1}. ${s.title}\n   ${s.description}\n`;
+                    a.scenarios.slice(0,3).forEach((s, i) => {
+                        response += `${i+1}. ${s.title}: ${s.description}\n`;
                     });
                 }
-
-                response += `\n⚠️ Монтаж будет доступен в следующем обновлении.`;
+                response += `\n⚠️ Монтаж скоро появится`;
 
                 addMessage(response, 'ai');
                 addProjectCard(file.name, a, projectId);
             } else {
-                addMessage('❌ Ошибка анализа', 'ai');
+                addMessage('❌ Ошибка анализа: ' + (analyzeData.error || 'неизвестно'), 'ai');
             }
         } catch (e) {
             console.error(e);
-            addMessage('❌ Сервер недоступен. Попробуй позже.', 'ai');
+            addMessage(`❌ Сервер недоступен.\n${e.message}`, 'ai');
         }
 
         uploadedFiles = [];
         renderFiles();
         btn.disabled = false;
+        icon.innerHTML = '↑';
+        isProcessing = false;
     }
 
     async function loadProjects() {
         try {
-            const res = await fetch(`${API_URL}/projects`);
+            const res = await fetch(`${API_URL}/projects`, { mode: 'cors' });
+            if (!res.ok) return;
             const data = await res.json();
             const list = document.getElementById('projectsList');
             list.innerHTML = '';
 
             if (data.projects.length === 0) {
-                list.innerHTML = '<div style="color:#8888aa;text-align:center;padding:20px;">Пока пусто</div>';
+                list.innerHTML = '<div class="empty-state"><div class="icon">🎞</div><div>Пока нет проектов</div></div>';
                 return;
             }
 
@@ -286,69 +581,95 @@
                 list.appendChild(createProjectCard(p));
             });
         } catch(e) {
-            document.getElementById('projectsList').innerHTML = 
-                '<div style="color:#e74c3c;text-align:center;padding:20px;">Сервер недоступен</div>';
+            // Сервер офлайн — оставляем пустое состояние
         }
     }
 
     function addProjectCard(name, analysis, id) {
         const list = document.getElementById('projectsList');
-        const empty = list.querySelector('div[style]');
+        const empty = list.querySelector('.empty-state');
         if (empty) empty.remove();
 
         const card = createProjectCard({
-            id: id,
-            filename: name,
-            status: 'analyzed',
-            analysis: analysis,
-            created: new Date().toISOString()
+            id, filename: name, status: 'analyzed',
+            analysis, created: new Date().toISOString()
         });
-
         list.insertBefore(card, list.firstChild);
     }
 
     function createProjectCard(p) {
-        const typeEmoji = p.analysis ? {
-            'sport_goal': '⚽', 'event_cake': '🎂', 'pet_moment': '🐱',
-            'conversation': '💬', 'dance_music': '💃'
-        }[p.analysis.video_type] || '🎬' : '🎬';
+        const typeColors = {
+            'sport_goal': { bg: 'rgba(59,130,246,0.2)', emoji: '⚽' },
+            'event_cake': { bg: 'rgba(236,72,153,0.2)', emoji: '🎂' },
+            'pet_moment': { bg: 'rgba(34,197,94,0.2)', emoji: '🐱' },
+            'conversation': { bg: 'rgba(168,85,247,0.2)', emoji: '💬' },
+            'dance_music': { bg: 'rgba(251,146,60,0.2)', emoji: '💃' },
+            'social_clip': { bg: 'rgba(124,58,237,0.2)', emoji: '📱' },
+            'short_clip': { bg: 'rgba(250,204,21,0.2)', emoji: '⚡' },
+            'long_video': { bg: 'rgba(107,114,128,0.2)', emoji: '🎞' },
+        };
+        const tc = typeColors[p.analysis?.video_type] || { bg: 'rgba(124,58,237,0.2)', emoji: '🎬' };
 
         const div = document.createElement('div');
         div.className = 'project-card';
         div.id = `proj-${p.id}`;
         div.innerHTML = `
-            <div>
-                <div class="title">${typeEmoji} ${p.filename?.slice(0,25)}</div>
-                <div class="meta">
-                    ${p.analysis?.duration?.toFixed(0) || '?'}с • 
-                    <span class="status ${p.status === 'analyzed' ? 'ready' : 'analyzing'}">${p.status === 'analyzed' ? 'Готово' : 'Анализ...'}</span>
+            <div class="project-thumb" style="background:${tc.bg}">${tc.emoji}</div>
+            <div class="project-info">
+                <div class="project-title">${p.filename?.slice(0,30)}</div>
+                <div class="project-meta">
+                    ${p.analysis?.duration?.toFixed(0) || '?'}с
+                    <span class="status-badge status-ready">Готово</span>
                 </div>
             </div>
-            <div style="display:flex;gap:8px;">
-                <button class="btn play" onclick="alert('Монтаж будет доступен скоро! 🚀')">▶</button>
-                <button class="btn delete" onclick="deleteProject('${p.id}')">🗑</button>
-            </div>`;
+            <div class="project-actions">
+                <button class="btn-icon btn-play" onclick="showToast('Монтаж скоро! 🚀')">▶</button>
+                <button class="btn-icon btn-delete" onclick="deleteProject('${p.id}')">🗑</button>
+            </div>
+        `;
         return div;
     }
 
     async function deleteProject(id) {
         try {
-            await fetch(`${API_URL}/projects/${id}`, { method: 'DELETE' });
-            const card = document.getElementById(`proj-${id}`);
-            if (card) card.remove();
-
-            const list = document.getElementById('projectsList');
-            if (list.children.length === 0) {
-                list.innerHTML = '<div style="color:#8888aa;text-align:center;padding:20px;">Пока пусто</div>';
-            }
+            await fetch(`${API_URL}/projects/${id}`, { method: 'DELETE', mode: 'cors' });
         } catch(e) {}
+        const card = document.getElementById(`proj-${id}`);
+        if (card) {
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.95)';
+            card.style.transition = 'all 0.2s';
+            setTimeout(() => {
+                card.remove();
+                if (document.getElementById('projectsList').children.length === 0) {
+                    document.getElementById('projectsList').innerHTML = '<div class="empty-state"><div class="icon">🎞</div><div>Пока нет проектов</div></div>';
+                }
+            }, 200);
+        }
+    }
+
+    function showToast(text) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = text;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }, 2200);
     }
 
     document.getElementById('promptInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') sendPrompt();
     });
 
-    setTimeout(() => addMessage('Привет! 👋 Загрузи видео и напиши что сделать. ИИ проанализирует и предложит варианты монтажа!', 'ai'), 300);
+    setTimeout(() => {
+        addMessage('Привет! 👋 Я NexusCut AI. Загрузи видео и напиши что хочешь сделать — я проанализирую и предложу варианты монтажа.', 'ai');
+    }, 400);
 </script>
 </body>
 </html>
